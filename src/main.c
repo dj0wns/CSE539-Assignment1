@@ -9,7 +9,7 @@
 #define LEFT(x) ((x & 0xf0)>>4)
 #define RIGHT(x) ((x & 0xf))
 
- uint32_t sbox[16]={
+uint32_t sbox[16]={
 	7, 8, 6, 12, 14, 1, 2, 13,
 	0, 11, 15, 4, 10, 9, 3, 5,
 };
@@ -85,7 +85,7 @@ int encrypt(uint32_t key, FILE *input_file, FILE *output_file){
 	while((size = readBlock(input_file, buffer))){
 		
 		encrypt_sbox(buffer);
-
+		(*(uint32_t*)buffer) ^= key;
 		//write new block
 		writeBlock(output_file, buffer, size);
 		bytes_written += size;
@@ -101,6 +101,7 @@ int decrypt(uint32_t key, FILE *input_file, FILE *output_file){
 	int size;
 	while((size = readBlock(input_file, buffer))){
 		
+		(*(uint32_t*)buffer) ^= key;
 		decrypt_sbox(buffer);
 
 		//write new block
