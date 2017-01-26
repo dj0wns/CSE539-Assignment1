@@ -5,6 +5,21 @@
 
 //block size in sets of 4 bits (chars)
 #define BLOCK_SIZE 4
+#define BIT(x) (( 1 << x))
+#define LEFT(x) ((x & 0xf0)>>4)
+#define RIGHT(x) ((x & 0xf))
+
+ uint32_t sbox[16]={
+	7, 8, 6, 12, 14, 1, 2, 13,
+	0, 11, 15, 4, 10, 9, 3, 5,
+};
+
+uint32_t unsbox[16]={
+	8, 5, 6, 14, 11, 15, 2, 0,
+	1, 13, 12, 9, 3, 7, 4, 10
+
+};
+
 
 size_t readBlock(FILE *fp, char buffer[BLOCK_SIZE]);
 void writeBlock(FILE *fp, char buffer[BLOCK_SIZE], int size);
@@ -48,17 +63,28 @@ void writeBlock(FILE *fp, char buffer[BLOCK_SIZE], int size){
 	fwrite(buffer, sizeof(char), size, fp);
 }
 
+
+void encrypt_sbox(char buffer[BLOCK_SIZE]){
+	for(int i = 0; i < BLOCK_SIZE; i++){
+		buffer[i] = (sbox[LEFT(buffer[i])] << 4) | sbox[RIGHT(buffer[i])];
+	}
+
+}
+
+void decrypt_sbox(char buffer[BLOCK_SIZE]){
+	for(int i = 0; i < BLOCK_SIZE; i++){
+		buffer[i] = (unsbox[LEFT(buffer[i])] << 4) | unsbox[RIGHT(buffer[i])];
+	}
+
+}
+
 int encrypt(uint32_t key, FILE *input_file, FILE *output_file){
 	int bytes_written = 0;
 	char buffer[BLOCK_SIZE];
 	int size;
 	while((size = readBlock(input_file, buffer))){
 		
-		//TODO: implement real encryption
-		//increment by 1
-		for(int i = 0 ; i < size; i++){
-			buffer[i] += 1;
-		}
+		encrypt_sbox(buffer);
 
 		//write new block
 		writeBlock(output_file, buffer, size);
@@ -75,11 +101,7 @@ int decrypt(uint32_t key, FILE *input_file, FILE *output_file){
 	int size;
 	while((size = readBlock(input_file, buffer))){
 		
-		//TODO: implement real encryption
-		//increment by 1
-		for(int i = 0 ; i < size; i++){
-			buffer[i] -= 1;
-		}
+		decrypt_sbox(buffer);
 
 		//write new block
 		writeBlock(output_file, buffer, size);
